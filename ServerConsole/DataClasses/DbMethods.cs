@@ -2,9 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using static Program;
 
 namespace ServerConsole.DataClasses
 {
@@ -19,14 +21,16 @@ namespace ServerConsole.DataClasses
             try
             {
                 _context.Database.EnsureCreated();
-                Console.WriteLine("✅ База данных и таблицы созданы");
+                AddLogs("База данных и таблицы созданы", "Успех");
+                Console.WriteLine("База данных и таблицы созданы");
 
                 // Проверяем создание таблиц
                 CheckTablesExist();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Ошибка создания базы: {ex.Message}");
+                AddLogs("Ошибка создания базы:", "Фатальная ошибка");
+                Console.WriteLine($"Ошибка создания базы: {ex.Message}");
             }
 
         }
@@ -48,7 +52,8 @@ namespace ServerConsole.DataClasses
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Ошибка: {ex.Message}, пересоздаем БД...");
+                AddLogs($"Ошибка: {ex.Message}, пересоздаем БД", "Ошибка");
+                Console.WriteLine($"Ошибка: {ex.Message}, пересоздаем БД");
                 _context.Database.EnsureDeleted();
                 _context.Database.EnsureCreated();
                 AddTestData();
@@ -57,61 +62,70 @@ namespace ServerConsole.DataClasses
 
         private void AddTestData()//это было написано через иишку , потому что было лень придумывать тестовые данные
         {
-            // Интерфейсы
-            var interfaces = new List<Interfaces>
-    {
-        new Interfaces("Интерфейс 1", "Описание 1"),
-        new Interfaces("Интерфейс 2", "Описание 2"),
-        new Interfaces("Интерфейс 3", "Описание 3")
-    };
-            _context.Interfaces.AddRange(interfaces);
-            _context.SaveChanges();
-
-            // Устройства
-            var devices = new List<Devices>
-    {
-        new Devices(1, "Устройство 1", "Описание устройства 1", true, "Круг ●", 50, 10, 10, "#FF0000"),
-        new Devices(2, "Устройство 2", "Описание устройства 2", true, "Квадрат ■", 60, 50, 50, "#0000FF"),
-        new Devices(3, "Устройство 3", "Описание устройства 3", false, "Треугольник ▲", 40, 100, 100, "#008000")
-    };
-            _context.Devices.AddRange(devices);
-            _context.SaveChanges();
-
-            // Регистры
-            var registers = new List<Registers>
-    {
-        new Registers(1, "Регистр 1", "Описание регистра 1"),
-        new Registers(2, "Регистр 2", "Описание регистра 2"),
-        new Registers(3, "Регистр 3", "Описание регистра 3")
-    };
-            _context.Registers.AddRange(registers);
-            _context.SaveChanges();
-
-            // Значения регистров
-            var random = new Random();
-            var registerValues = new List<RegisterValues>();
-            var now = DateTime.UtcNow;
-
-            for (int registerId = 1; registerId <= 3; registerId++)
+            try
             {
-                for (int i = 0; i < 3; i++)
-                {
-                    registerValues.Add(new RegisterValues
-                    {
-                        RegisterId = registerId,
-                        Value = (float)(random.NextDouble() * 100),
-                        Timestamp = now.AddHours(-i)
-                    });
-                }
-            }
-            _context.RegisterValues.AddRange(registerValues);
-            _context.SaveChanges();
+                // Интерфейсы
+                var interfaces = new List<Interfaces>
+        {
+            new Interfaces("Интерфейс 1", "Описание 1"),
+            new Interfaces("Интерфейс 2", "Описание 2"),
+            new Interfaces("Интерфейс 3", "Описание 3")
+        };
+                _context.Interfaces.AddRange(interfaces);
+                _context.SaveChanges();
 
-            Console.WriteLine(" Тестовые данные добавлены во все таблицы");
+                // Устройства
+                var devices = new List<Devices>
+        {
+            new Devices(1, "Устройство 1", "Описание устройства 1", true, "Круг ●", 50, 10, 10, "#FF0000"),
+            new Devices(2, "Устройство 2", "Описание устройства 2", true, "Квадрат ■", 60, 50, 50, "#0000FF"),
+            new Devices(3, "Устройство 3", "Описание устройства 3", false, "Треугольник ▲", 40, 100, 100, "#008000")
+        };
+                _context.Devices.AddRange(devices);
+                _context.SaveChanges();
+
+                // Регистры
+                var registers = new List<Registers>
+        {
+            new Registers(1, "Регистр 1", "Описание регистра 1"),
+            new Registers(2, "Регистр 2", "Описание регистра 2"),
+            new Registers(3, "Регистр 3", "Описание регистра 3")
+        };
+                _context.Registers.AddRange(registers);
+                _context.SaveChanges();
+
+                // Значения регистров
+                var random = new Random();
+                var registerValues = new List<RegisterValues>();
+                var now = DateTime.UtcNow;
+
+                for (int registerId = 1; registerId <= 3; registerId++)
+                {
+                    for (int i = 0; i < 3; i++)
+                    {
+                        registerValues.Add(new RegisterValues
+                        {
+                            RegisterId = registerId,
+                            Value = (float)(random.NextDouble() * 100),
+                            Timestamp = now.AddHours(-i)
+                        });
+                    }
+                }
+                _context.RegisterValues.AddRange(registerValues);
+                _context.SaveChanges();
+
+                AddLogs("Тестовые данные добавлены во все таблицы", "Успех");
+                Console.WriteLine("✅ Тестовые данные добавлены во все таблицы");
+            }
+            catch (Exception ex)
+            {
+                AddLogs($"Ошибка добавления тестовых данных: {ex.Message}", "Ошибка");
+                Console.WriteLine($"❌ Ошибка добавления тестовых данных: {ex.Message}");
+            }
         }
 
-        // Добавление интерфейса
-        public async Task AddData(string typeObjects, List<object> Item, StreamWriter writer)
+        // Добавление данных
+        public async Task AddData(string typeObjects, List<object> Item, IResponseWriter writer)
         {
             try
             {
@@ -130,7 +144,8 @@ namespace ServerConsole.DataClasses
                             await _context.Interfaces.AddAsync(interfaceObj);
                             await _context.SaveChangesAsync();
 
-                            
+                            AddLogs($"Добавлен интерфейс: {interfaceObj.Name}", "Успех");
+                            Console.WriteLine($"✅ Добавлен интерфейс: {interfaceObj.Name}");
                         }
                         break;
                     case "Devices":
@@ -144,7 +159,9 @@ namespace ServerConsole.DataClasses
 
                             if (!interfaceExists)
                             {
-                                Console.WriteLine($"❌ Интерфейс с ID {interfaceId} не существует");
+                                string errorMsg = $"❌ Интерфейс с ID {interfaceId} не существует";
+                                AddLogs(errorMsg, "Ошибка");
+                                Console.WriteLine(errorMsg);
                                 return;
                             }
 
@@ -161,25 +178,28 @@ namespace ServerConsole.DataClasses
                                 Color = objectList1.Count > 9 ? GetSafeString(objectList1[9]) : "#000000",
                                 EditingDate = DateTime.UtcNow
                             };
-                            
 
                             await _context.Devices.AddAsync(deviceObj);
                             await _context.SaveChangesAsync();
 
+                            AddLogs($"Добавлено устройство: {deviceObj.Name}", "Успех");
+                            Console.WriteLine($"✅ Добавлено устройство: {deviceObj.Name}");
                         }
                         break;
                     case "Registers":
-                        if (Item is List<object> objectList2 && objectList2.Count >= 5) 
+                        if (Item is List<object> objectList2 && objectList2.Count >= 5)
                         {
                             int deviceId = GetSafeInt(objectList2[1]);
-                            float initialValue = GetSafeFloat(objectList2[4]); 
+                            float initialValue = GetSafeFloat(objectList2[4]);
 
                             bool deviceExists = await _context.Devices
                                 .AnyAsync(d => d.Id == deviceId);
 
                             if (!deviceExists)
                             {
-                                Console.WriteLine($"❌ Устройство с ID {deviceId} не существует");
+                                string errorMsg = $"❌ Устройство с ID {deviceId} не существует";
+                                AddLogs(errorMsg, "Ошибка");
+                                Console.WriteLine(errorMsg);
                                 return;
                             }
 
@@ -198,14 +218,16 @@ namespace ServerConsole.DataClasses
                             var registerValue = new RegisterValues
                             {
                                 RegisterId = registerObj.Id,
-                                Value = initialValue, 
+                                Value = initialValue,
                                 Timestamp = DateTime.UtcNow
                             };
 
                             await _context.RegisterValues.AddAsync(registerValue);
                             await _context.SaveChangesAsync();
 
-                            Console.WriteLine($"✅ Регистр создан и начальное значение {initialValue} добавлено");
+                            string successMsg = $"✅ Регистр создан и начальное значение {initialValue} добавлено";
+                            AddLogs(successMsg, "Успех");
+                            Console.WriteLine(successMsg);
                         }
                         break;
 
@@ -216,7 +238,6 @@ namespace ServerConsole.DataClasses
                             // Проверяем первый элемент чтобы понять формат
                             if (objectList3.Count >= 2)
                             {
-                                
                                 // Это пачка значений: [[registerId1, value1], [registerId2, value2], ...]
                                 await AddMultipleRegisterValues(objectList3);
                             }
@@ -240,39 +261,57 @@ namespace ServerConsole.DataClasses
 
                             await _context.Logs.AddAsync(logObj);
                             await _context.SaveChangesAsync();
+
+                            AddLogs($"Добавлен лог: {logObj.Message}", "Успех");
+                            Console.WriteLine($"✅ Добавлен лог: {logObj.Message}");
                         }
                         break;
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($" Ошибка добавления: {ex.Message}");
+                string errorMsg = $"Ошибка добавления: {ex.Message}";
+                AddLogs(errorMsg, "Ошибка");
+                Console.WriteLine($"❌ {errorMsg}");
                 await SendErrorResponseAsync(writer, ex.Message);
             }
-
         }
 
         private async Task AddSingleRegisterValue(List<object> objectList3)
         {
-            int registerId = GetSafeInt(objectList3[0]);
-
-            bool registerExists = await _context.Registers.AnyAsync(r => r.Id == registerId);
-            if (!registerExists)
+            try
             {
-                Console.WriteLine($" Регистр с ID {registerId} не существует");
-                return;
+                int registerId = GetSafeInt(objectList3[0]);
+
+                bool registerExists = await _context.Registers.AnyAsync(r => r.Id == registerId);
+                if (!registerExists)
+                {
+                    string errorMsg = $"Регистр с ID {registerId} не существует";
+                    AddLogs(errorMsg, "Ошибка");
+                    Console.WriteLine($"❌ {errorMsg}");
+                    return;
+                }
+
+                var registerValueObj = new RegisterValues
+                {
+                    RegisterId = registerId,
+                    Value = GetSafeFloat(objectList3[1]),
+                    Timestamp = objectList3.Count > 2 ? GetSafeDateTime(objectList3[2]) : DateTime.UtcNow
+                };
+
+                await _context.RegisterValues.AddAsync(registerValueObj);
+                await _context.SaveChangesAsync();
+
+                string successMsg = $"Добавлено значение {registerValueObj.Value} для регистра {registerId}";
+                AddLogs(successMsg, "Успех");
+                Console.WriteLine($"✅ {successMsg}");
             }
-
-            var registerValueObj = new RegisterValues
+            catch (Exception ex)
             {
-                RegisterId = registerId,
-                Value = GetSafeFloat(objectList3[1]),
-                Timestamp = objectList3.Count > 2 ? GetSafeDateTime(objectList3[2]) : DateTime.UtcNow
-            };
-
-            await _context.RegisterValues.AddAsync(registerValueObj);
-            await _context.SaveChangesAsync();
-            Console.WriteLine($" Добавлено значение {registerValueObj.Value} для регистра {registerId}");
+                string errorMsg = $"Ошибка добавления значения регистра: {ex.Message}";
+                AddLogs(errorMsg, "Ошибка");
+                Console.WriteLine($"❌ {errorMsg}");
+            }
         }
         private async Task AddMultipleRegisterValues(List<object> batchData)
         {
@@ -291,7 +330,9 @@ namespace ServerConsole.DataClasses
                         bool registerExists = await _context.Registers.AnyAsync(r => r.Id == registerId);
                         if (!registerExists)
                         {
-                            Console.WriteLine($" Регистр с ID {registerId} не существует, пропускаем");
+                            string warnMsg = $"Регистр с ID {registerId} не существует, пропускаем";
+                            AddLogs(warnMsg, "Предупреждение");
+                            Console.WriteLine($"⚠️ {warnMsg}");
                             continue;
                         }
 
@@ -310,18 +351,21 @@ namespace ServerConsole.DataClasses
                 {
                     await _context.RegisterValues.AddRangeAsync(registerValuesToAdd);
                     await _context.SaveChangesAsync();
-                    Console.WriteLine($" Добавлено {registerValuesToAdd.Count} значений регистров");
 
-
+                    string successMsg = $"Добавлено {registerValuesToAdd.Count} значений регистров";
+                    AddLogs(successMsg, "Успех");
+                    Console.WriteLine($"✅ {successMsg}");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($" Ошибка добавления пачки значений: {ex.Message}");
+                string errorMsg = $"Ошибка добавления пачки значений: {ex.Message}";
+                AddLogs(errorMsg, "Ошибка");
+                Console.WriteLine($"❌ {errorMsg}");
             }
         }
 
-        private static async Task SendErrorResponseAsync(StreamWriter writer, string error)
+        private static async Task SendErrorResponseAsync(IResponseWriter writer, string error)
         {
             var response = new { Status = "error", Message = error };
             string json = JsonSerializer.Serialize(response);
@@ -375,54 +419,101 @@ namespace ServerConsole.DataClasses
         #region Получение всех интерфейсов
         public async Task<List<Interfaces>> GetAllDataInterfaceFromDb()
         {
-            return await _context.Interfaces
-                        .OrderBy(i => i.Id)
-                        .AsNoTracking() 
-                        .ToListAsync();
+            try
+            {
+                var result = await _context.Interfaces
+                            .OrderBy(i => i.Id)
+                            .AsNoTracking()
+                            .ToListAsync();
 
-                
-
-            
-            
+                AddLogs($"Получено {result.Count} интерфейсов", "Успех");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                AddLogs($"Ошибка получения интерфейсов: {ex.Message}", "Ошибка");
+                return new List<Interfaces>();
+            }
         }
 
         public async Task<List<Devices>> GetAllDataDevicesFromDb()
         {
-            return await _context.Devices
-                        .OrderBy(d => d.Id)
-                        .AsNoTracking()
-                        .ToListAsync();
-            
+            try
+            {
+                var result = await _context.Devices
+                            .OrderBy(d => d.Id)
+                            .AsNoTracking()
+                            .ToListAsync();
 
+                AddLogs($"Получено {result.Count} устройств", "Успех");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                AddLogs($"Ошибка получения устройств: {ex.Message}", "Ошибка");
+                return new List<Devices>();
+            }
         }
 
         public async Task<List<Registers>> GetAllDataRegistersFromDb()
         {
-            return await _context.Registers
-                        .OrderBy(r => r.Id)
-                        .AsNoTracking()
-                        .ToListAsync();
+            try
+            {
+                var result = await _context.Registers
+                            .OrderBy(r => r.Id)
+                            .AsNoTracking()
+                            .ToListAsync();
+
+                AddLogs($"Получено {result.Count} регистров", "Успех");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                AddLogs($"Ошибка получения регистров: {ex.Message}", "Ошибка");
+                return new List<Registers>();
+            }
         }
 
         public async Task<List<RegisterValues>> GetAllDataRegisterValuesFromDb()
         {
-            return await _context.RegisterValues
-                        .OrderBy(rv => rv.Id)
-                        .AsNoTracking()
-                        .ToListAsync();
+            try
+            {
+                var result = await _context.RegisterValues
+                            .OrderBy(rv => rv.Id)
+                            .AsNoTracking()
+                            .ToListAsync();
+
+                AddLogs($"Получено {result.Count} значений регистров", "Успех");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                AddLogs($"Ошибка получения значений регистров: {ex.Message}", "Ошибка");
+                return new List<RegisterValues>();
+            }
         }
 
         public async Task<List<Logs>> GetAllDataLogsFromDb()
         {
-            return await _context.Logs
-                        .OrderBy(l => l.Id)
-                        .AsNoTracking()
-                        .ToListAsync();
+            try
+            {
+                var result = await _context.Logs
+                            .OrderBy(l => l.Id)
+                            .AsNoTracking()
+                            .ToListAsync();
+
+                AddLogs($"Получено {result.Count} логов", "Успех");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                AddLogs($"Ошибка получения логов: {ex.Message}", "Ошибка");
+                return new List<Logs>();
+            }
         }
         #endregion
 
-
-        public async Task GetItemById(string typeObjects, List<object> Item, StreamWriter writer)
+        public async Task GetItemById(string typeObjects, List<object> Item, IResponseWriter writer)
         {
             try
             {
@@ -439,6 +530,9 @@ namespace ServerConsole.DataClasses
                                 .AsNoTracking()
                                 .FirstOrDefaultAsync(i => i.Id == interfaceId);
                             response = new ResponseGetOneItem("Interfaces", _item);
+
+                            if (_item != null)
+                                AddLogs($"Получен интерфейс с ID {interfaceId}", "Успех");
                         }
                         break;
 
@@ -449,6 +543,9 @@ namespace ServerConsole.DataClasses
                                 .AsNoTracking()
                                 .FirstOrDefaultAsync(i => i.Id == devicesId);
                             response = new ResponseGetOneItem("Devices", _item);
+
+                            if (_item != null)
+                                AddLogs($"Получено устройство с ID {devicesId}", "Успех");
                         }
                         break;
 
@@ -457,15 +554,18 @@ namespace ServerConsole.DataClasses
                         {
                             _item = await _context.Registers
                                 .AsNoTracking()
-                                .FirstOrDefaultAsync(i => i.Id == registersId); 
+                                .FirstOrDefaultAsync(i => i.Id == registersId);
                             var registerValuesList = await _context.RegisterValues
-                                .OrderBy(d => d.RegisterId)
+                                .Where(rv => rv.RegisterId == registersId)
+                                .OrderByDescending(rv => rv.Timestamp)
                                 .AsNoTracking()
                                 .ToListAsync();
 
-                            
                             _objectListRegValue = registerValuesList.Cast<object>().ToList();
                             response = new ResponseGetOneItem("Registers", _item, _objectListRegValue);
+
+                            if (_item != null)
+                                AddLogs($"Получен регистр с ID {registersId}", "Успех");
                         }
                         break;
 
@@ -476,9 +576,10 @@ namespace ServerConsole.DataClasses
                                 .AsNoTracking()
                                 .FirstOrDefaultAsync(i => i.Id == registerValuesId);
 
-                            
-
                             response = new ResponseGetOneItem("RegisterValues", _item, _objectListRegValue);
+
+                            if (_item != null)
+                                AddLogs($"Получено значение регистра с ID {registerValuesId}", "Успех");
                         }
                         break;
 
@@ -489,26 +590,29 @@ namespace ServerConsole.DataClasses
                                 .AsNoTracking()
                                 .FirstOrDefaultAsync(i => i.Id == logsId);
 
-                            
                             response = new ResponseGetOneItem("Logs", _item);
+
+                            if (_item != null)
+                                AddLogs($"Получен лог с ID {logsId}", "Успех");
                         }
                         break;
 
                     default:
-                        Console.WriteLine($"❌ Неизвестный тип объекта: {typeObjects}");
-                        var errorResponse = new { Status = "error", Message = $"Неизвестный тип объекта: {typeObjects}" };
-                        byte[] errorData = JsonSerializer.SerializeToUtf8Bytes(errorResponse);
-                        await writer.BaseStream.WriteAsync(errorData, 0, errorData.Length);
-                        await writer.FlushAsync();
+                        string errorMsg = $"Неизвестный тип объекта: {typeObjects}";
+                        AddLogs(errorMsg, "Ошибка");
+                        Console.WriteLine($"❌ {errorMsg}");
+                        await writer.SendErrorAsync(errorMsg);
                         return;
                 }
 
                 // Проверяем, найден ли объект
                 if (_item == null)
                 {
-                    var notFoundResponse = new { Status = "not_found", Message = $"Объект с ID {Item[0]} не найден" };
-                    byte[] notFoundData = JsonSerializer.SerializeToUtf8Bytes(notFoundResponse);
-                    await writer.BaseStream.WriteAsync(notFoundData, 0, notFoundData.Length);
+                    string notFoundMsg = $"Объект с ID {Item[0]} не найден";
+                    AddLogs(notFoundMsg, "Предупреждение");
+                    var notFoundResponse = new { Status = "not_found", Message = notFoundMsg };
+                    string notFoundJson = JsonSerializer.Serialize(notFoundResponse);
+                    await writer.WriteAsync(notFoundJson);
                     await writer.FlushAsync();
                     return;
                 }
@@ -518,31 +622,163 @@ namespace ServerConsole.DataClasses
                     WriteIndented = false,
                 };
 
-                byte[] jsonData = JsonSerializer.SerializeToUtf8Bytes(response, options);
-
-                await writer.BaseStream.WriteAsync(jsonData, 0, jsonData.Length);
+                string jsonData = JsonSerializer.Serialize(response, options);
+                await writer.WriteAsync(jsonData);
                 await writer.FlushAsync();
 
+                AddLogs($"JSON Ответ отправлен ({jsonData.Length} bytes)", "Успех");
                 Console.WriteLine($"✅ JSON Ответ отправлен ({jsonData.Length} bytes)");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Ошибка в GetOneItem: {ex.Message}");
+                string errorMsg = $"Ошибка в GetOneItem: {ex.Message}";
+                AddLogs(errorMsg, "Ошибка");
+                Console.WriteLine($"❌ {errorMsg}");
 
-                // Отправляем ошибку клиенту
-                try
-                {
-                    var errorResponse = new { Status = "error", Message = ex.Message };
-                    byte[] errorData = JsonSerializer.SerializeToUtf8Bytes(errorResponse);
-                    await writer.BaseStream.WriteAsync(errorData, 0, errorData.Length);
-                    await writer.FlushAsync();
-                }
-                catch
-                {
-                    // Игнорируем ошибки при отправке ошибки
-                }
+                // Отправляем ошибку клиенту через IResponseWriter
+                await writer.SendErrorAsync(ex.Message);
             }
         }
+
+        //public async Task GetItemById(string typeObjects, List<object> Item, IResponseWriter writer)
+        //{
+        //    try
+        //    {
+        //        var response = new ResponseGetOneItem(" ", new object());
+        //        object _item = new object();
+        //        List<object> _objectListRegValue = new List<object>();
+
+        //        switch (typeObjects)
+        //        {
+        //            case "Interfaces":
+        //                if (int.TryParse(Item[0].ToString(), out int interfaceId))
+        //                {
+        //                    _item = await _context.Interfaces
+        //                        .AsNoTracking()
+        //                        .FirstOrDefaultAsync(i => i.Id == interfaceId);
+        //                    response = new ResponseGetOneItem("Interfaces", _item);
+
+        //                    if (_item != null)
+        //                        AddLogs($"Получен интерфейс с ID {interfaceId}", "Успех");
+        //                }
+        //                break;
+
+        //            case "Devices":
+        //                if (int.TryParse(Item[0].ToString(), out int devicesId))
+        //                {
+        //                    _item = await _context.Devices
+        //                        .AsNoTracking()
+        //                        .FirstOrDefaultAsync(i => i.Id == devicesId);
+        //                    response = new ResponseGetOneItem("Devices", _item);
+
+        //                    if (_item != null)
+        //                        AddLogs($"Получено устройство с ID {devicesId}", "Успех");
+        //                }
+        //                break;
+
+        //            case "Registers":
+        //                if (int.TryParse(Item[0].ToString(), out int registersId))
+        //                {
+        //                    _item = await _context.Registers
+        //                        .AsNoTracking()
+        //                        .FirstOrDefaultAsync(i => i.Id == registersId);
+        //                    var registerValuesList = await _context.RegisterValues
+        //                        .OrderBy(d => d.RegisterId)
+        //                        .AsNoTracking()
+        //                        .ToListAsync();
+
+        //                    _objectListRegValue = registerValuesList.Cast<object>().ToList();
+        //                    response = new ResponseGetOneItem("Registers", _item, _objectListRegValue);
+
+        //                    if (_item != null)
+        //                        AddLogs($"Получен регистр с ID {registersId}", "Успех");
+        //                }
+        //                break;
+
+        //            case "RegisterValues":
+        //                if (int.TryParse(Item[0].ToString(), out int registerValuesId))
+        //                {
+        //                    _item = await _context.RegisterValues
+        //                        .AsNoTracking()
+        //                        .FirstOrDefaultAsync(i => i.Id == registerValuesId);
+
+        //                    response = new ResponseGetOneItem("RegisterValues", _item, _objectListRegValue);
+
+        //                    if (_item != null)
+        //                        AddLogs($"Получено значение регистра с ID {registerValuesId}", "Успех");
+        //                }
+        //                break;
+
+        //            case "Logs":
+        //                if (int.TryParse(Item[0].ToString(), out int logsId))
+        //                {
+        //                    _item = await _context.Logs
+        //                        .AsNoTracking()
+        //                        .FirstOrDefaultAsync(i => i.Id == logsId);
+
+        //                    response = new ResponseGetOneItem("Logs", _item);
+
+        //                    if (_item != null)
+        //                        AddLogs($"Получен лог с ID {logsId}", "Успех");
+        //                }
+        //                break;
+
+        //            default:
+        //                string errorMsg = $"Неизвестный тип объекта: {typeObjects}";
+        //                AddLogs(errorMsg, "Ошибка");
+        //                Console.WriteLine($"❌ {errorMsg}");
+        //                var errorResponse = new { Status = "error", Message = errorMsg };
+        //                byte[] errorData = JsonSerializer.SerializeToUtf8Bytes(errorResponse);
+        //                await writer.BaseStream.WriteAsync(errorData, 0, errorData.Length);
+        //                await writer.FlushAsync();
+        //                return;
+        //        }
+
+        //        // Проверяем, найден ли объект
+        //        if (_item == null)
+        //        {
+        //            string notFoundMsg = $"Объект с ID {Item[0]} не найден";
+        //            AddLogs(notFoundMsg, "Предупреждение");
+        //            var notFoundResponse = new { Status = "not_found", Message = notFoundMsg };
+        //            byte[] notFoundData = JsonSerializer.SerializeToUtf8Bytes(notFoundResponse);
+        //            await writer.BaseStream.WriteAsync(notFoundData, 0, notFoundData.Length);
+        //            await writer.FlushAsync();
+        //            return;
+        //        }
+
+        //        var options = new JsonSerializerOptions
+        //        {
+        //            WriteIndented = false,
+        //        };
+
+        //        byte[] jsonData = JsonSerializer.SerializeToUtf8Bytes(response, options);
+
+        //        await writer.BaseStream.WriteAsync(jsonData, 0, jsonData.Length);
+        //        await writer.FlushAsync();
+
+        //        AddLogs($"JSON Ответ отправлен ({jsonData.Length} bytes)", "Успех");
+        //        Console.WriteLine($"✅ JSON Ответ отправлен ({jsonData.Length} bytes)");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        string errorMsg = $"Ошибка в GetOneItem: {ex.Message}";
+        //        AddLogs(errorMsg, "Ошибка");
+        //        Console.WriteLine($"❌ {errorMsg}");
+
+        //        // Отправляем ошибку клиенту
+        //        try
+        //        {
+        //            var errorResponse = new { Status = "error", Message = ex.Message };
+        //            byte[] errorData = JsonSerializer.SerializeToUtf8Bytes(errorResponse);
+        //            await writer.BaseStream.WriteAsync(errorData, 0, errorData.Length);
+        //            await writer.FlushAsync();
+        //        }
+        //        catch
+        //        {
+        //            // Игнорируем ошибки при отправке ошибки
+        //        }
+        //    }
+        //}
 
 
 
@@ -588,7 +824,7 @@ namespace ServerConsole.DataClasses
         }
 
         // Обновление интерфейса
-        public async Task UpdateData(string typeObjects, List<object> Item, StreamWriter writer)
+        public async Task UpdateData(string typeObjects, List<object> Item, IResponseWriter writer)
         {
             try
             {
@@ -620,20 +856,30 @@ namespace ServerConsole.DataClasses
                                     existingInterface.EditingDate = DateTime.UtcNow;
 
                                     int changes = await _context.SaveChangesAsync();
+
+                                    AddLogs($"Обновлен интерфейс с ID {id}", "Успех");
+                                    Console.WriteLine($"✅ Обновлен интерфейс с ID {id}");
+                                    await Program.GetAllDataAsync(writer);
                                 }
                                 else
                                 {
-                                    Console.WriteLine($"❌ Интерфейс с ID {id} не найден");
+                                    string errorMsg1 = $"Интерфейс с ID {id} не найден";
+                                    AddLogs(errorMsg1, "Ошибка");
+                                    Console.WriteLine($"❌ {errorMsg1}");
                                 }
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine($"❌ Ошибка при обновлении интерфейса: {ex.Message}");
+                                string errorMsg2 = $"Ошибка при обновлении интерфейса: {ex.Message}";
+                                AddLogs(errorMsg2, "Ошибка");
+                                Console.WriteLine($"❌ {errorMsg2}");
                             }
                         }
                         else
                         {
-                            Console.WriteLine("❌ Недостаточно данных для обновления интерфейса");
+                            string errorMsg3 = "Недостаточно данных для обновления интерфейса";
+                            AddLogs(errorMsg3, "Ошибка");
+                            Console.WriteLine($"❌ {errorMsg3}");
                         }
                         break;
 
@@ -663,7 +909,9 @@ namespace ServerConsole.DataClasses
 
                                     if (!interfaceExists)
                                     {
-                                        Console.WriteLine($"❌ Интерфейс с ID {interfaceId} не существует");
+                                        string errorMsg1 = $"Интерфейс с ID {interfaceId} не существует";
+                                        AddLogs(errorMsg1, "Ошибка");
+                                        Console.WriteLine($"❌ {errorMsg1}");
                                         return;
                                     }
 
@@ -680,25 +928,35 @@ namespace ServerConsole.DataClasses
                                     existingDevice.Color = objectList1.Count > 9 ? GetSafeString(objectList1[9]) : existingDevice.Color;
 
                                     int changes = await _context.SaveChangesAsync();
+
+                                    AddLogs($"Обновлено устройство с ID {id}", "Успех");
+                                    Console.WriteLine($"✅ Обновлено устройство с ID {id}");
+                                    await Program.GetAllDataAsync(writer);
                                 }
                                 else
                                 {
-                                    Console.WriteLine($"❌ Девайс с ID {id} не найден");
+                                    string errorMsg2 = $"Девайс с ID {id} не найден";
+                                    AddLogs(errorMsg2, "Ошибка");
+                                    Console.WriteLine($"❌ {errorMsg2}");
                                 }
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine($"❌ Ошибка при обновлении Девайса: {ex.Message}");
+                                string errorMsg3 = $"Ошибка при обновлении Девайса: {ex.Message}";
+                                AddLogs(errorMsg3, "Ошибка");
+                                Console.WriteLine($"❌ {errorMsg3}");
                             }
                         }
                         else
                         {
-                            Console.WriteLine("❌ Недостаточно данных для обновления Девайса");
+                            string errorMsg4 = "Недостаточно данных для обновления Девайса";
+                            AddLogs(errorMsg4, "Ошибка");
+                            Console.WriteLine($"❌ {errorMsg4}");
                         }
                         break;
 
                     case "Registers":
-                        if (Item is List<object> objectList2 && objectList2.Count >= 5) // теперь нужно минимум 5 элементов
+                        if (Item is List<object> objectList2 && objectList2.Count >= 5)
                         {
                             try
                             {
@@ -723,12 +981,14 @@ namespace ServerConsole.DataClasses
 
                                     if (!deviceExists)
                                     {
-                                        Console.WriteLine($"❌ Устройство с ID {deviceId} не существует");
+                                        string errorMsg1 = $"Устройство с ID {deviceId} не существует";
+                                        AddLogs(errorMsg1, "Ошибка");
+                                        Console.WriteLine($"❌ {errorMsg1}");
                                         return;
                                     }
 
                                     // Получаем новое значение регистра из запроса
-                                    float newValue = GetSafeFloat(objectList2[4]); // 5-й элемент - новое значение
+                                    float newValue = GetSafeFloat(objectList2[4]);
 
                                     // Обновляем данные регистра
                                     existingRegister.DeviceId = deviceId;
@@ -742,28 +1002,37 @@ namespace ServerConsole.DataClasses
                                     var registerValue = new RegisterValues
                                     {
                                         RegisterId = existingRegister.Id,
-                                        Value = newValue, // передаем реальное значение из запроса
+                                        Value = newValue,
                                         Timestamp = DateTime.UtcNow
                                     };
 
                                     await _context.RegisterValues.AddAsync(registerValue);
                                     await _context.SaveChangesAsync();
 
-                                    Console.WriteLine($"✅ Регистр обновлен и новое значение {newValue} добавлено");
+                                    string successMsg = $"Регистр обновлен и новое значение {newValue} добавлено";
+                                    AddLogs(successMsg, "Успех");
+                                    Console.WriteLine($"✅ {successMsg}");
+                                    await Program.GetAllDataAsync(writer);
                                 }
                                 else
                                 {
-                                    Console.WriteLine($"❌ Регистр с ID {id} не найден");
+                                    string errorMsg2 = $"Регистр с ID {id} не найден";
+                                    AddLogs(errorMsg2, "Ошибка");
+                                    Console.WriteLine($"❌ {errorMsg2}");
                                 }
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine($"❌ Ошибка при обновлении регистра: {ex.Message}");
+                                string errorMsg3 = $"Ошибка при обновлении регистра: {ex.Message}";
+                                AddLogs(errorMsg3, "Ошибка");
+                                Console.WriteLine($"❌ {errorMsg3}");
                             }
                         }
                         else
                         {
-                            Console.WriteLine("❌ Недостаточно данных для обновления регистра. Ожидается: [id, deviceId, name, description, value]");
+                            string errorMsg4 = "Недостаточно данных для обновления регистра. Ожидается: [id, deviceId, name, description, value]";
+                            AddLogs(errorMsg4, "Ошибка");
+                            Console.WriteLine($"❌ {errorMsg4}");
                         }
                         break;
 
@@ -793,7 +1062,9 @@ namespace ServerConsole.DataClasses
 
                                     if (!registerExists)
                                     {
-                                        Console.WriteLine($"❌ Регистр с ID {registerId} не существует");
+                                        string errorMsg1 = $"Регистр с ID {registerId} не существует";
+                                        AddLogs(errorMsg1, "Ошибка");
+                                        Console.WriteLine($"❌ {errorMsg1}");
                                         return;
                                     }
 
@@ -803,20 +1074,29 @@ namespace ServerConsole.DataClasses
                                     existingRegisterValue.Timestamp = objectList3.Count > 3 ? GetSafeDateTime(objectList3[3]) : DateTime.UtcNow;
 
                                     int changes = await _context.SaveChangesAsync();
+
+                                    AddLogs($"Обновлено значение регистра с ID {id}", "Успех");
+                                    Console.WriteLine($"✅ Обновлено значение регистра с ID {id}");
                                 }
                                 else
                                 {
-                                    Console.WriteLine($"❌ Значение регистра с ID {id} не найдено");
+                                    string errorMsg2 = $"Значение регистра с ID {id} не найдено";
+                                    AddLogs(errorMsg2, "Ошибка");
+                                    Console.WriteLine($"❌ {errorMsg2}");
                                 }
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine($"❌ Ошибка при обновлении значения регистра: {ex.Message}");
+                                string errorMsg3 = $"Ошибка при обновлении значения регистра: {ex.Message}";
+                                AddLogs(errorMsg3, "Ошибка");
+                                Console.WriteLine($"❌ {errorMsg3}");
                             }
                         }
                         else
                         {
-                            Console.WriteLine("❌ Недостаточно данных для обновления значения регистра");
+                            string errorMsg4 = "Недостаточно данных для обновления значения регистра";
+                            AddLogs(errorMsg4, "Ошибка");
+                            Console.WriteLine($"❌ {errorMsg4}");
                         }
                         break;
 
@@ -846,38 +1126,65 @@ namespace ServerConsole.DataClasses
                                     existingLog.Timestamp = objectList4.Count > 3 ? GetSafeDateTime(objectList4[3]) : DateTime.UtcNow;
 
                                     int changes = await _context.SaveChangesAsync();
+
+                                    AddLogs($"Обновлен лог с ID {id}", "Успех");
+                                    Console.WriteLine($"✅ Обновлен лог с ID {id}");
                                 }
                                 else
                                 {
-                                    Console.WriteLine($"❌ Лог с ID {id} не найден");
+                                    string errorMsg1 = $"Лог с ID {id} не найден";
+                                    AddLogs(errorMsg1, "Ошибка");
+                                    Console.WriteLine($"❌ {errorMsg1}");
                                 }
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine($"❌ Ошибка при обновлении лога: {ex.Message}");
+                                string errorMsg2 = $"Ошибка при обновлении лога: {ex.Message}";
+                                AddLogs(errorMsg2, "Ошибка");
+                                Console.WriteLine($"❌ {errorMsg2}");
                             }
                         }
                         else
                         {
-                            Console.WriteLine("❌ Недостаточно данных для обновления лога");
+                            string errorMsg3 = "Недостаточно данных для обновления лога";
+                            AddLogs(errorMsg3, "Ошибка");
+                            Console.WriteLine($"❌ {errorMsg3}");
                         }
                         break;
 
                     default:
-                        Console.WriteLine($"❌ Неизвестный тип объекта: {typeObjects}");
-                        await SendErrorResponseAsync(writer, $"Неизвестный тип объекта: {typeObjects}");
+                        string errorMsg = $"Неизвестный тип объекта: {typeObjects}";
+                        AddLogs(errorMsg, "Ошибка");
+                        Console.WriteLine($"❌ {errorMsg}");
+                        await SendErrorResponseAsync(writer, errorMsg);
                         break;
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Ошибка Обновления: {ex.Message}");
+                string errorMsg = $"Ошибка Обновления: {ex.Message}";
+                AddLogs(errorMsg, "Ошибка");
+                Console.WriteLine($"❌ {errorMsg}");
                 await SendErrorResponseAsync(writer, ex.Message);
             }
         }
 
+        private async Task AddLogs(string message, string type) // отдельно вывел метод добавления логов в бд для удобства 
+        {
+            if (message.Length > 0 && type.Length >0)
+            {
+                var logObj = new Logs
+                {
+                    Message = message,
+                    Type = type,
+                };
+
+                await _context.Logs.AddAsync(logObj);
+                await _context.SaveChangesAsync();
+            }
+        }
         // Удаление интерфейса
-        public async Task DeleteItem(string typeObjects, List<object> Item, StreamWriter writer)
+        public async Task DeleteItem(string typeObjects, List<object> Item, IResponseWriter writer)
         {
             try
             {
@@ -906,6 +1213,7 @@ namespace ServerConsole.DataClasses
                                     _context.Interfaces.Remove(existingInterface);
                                     await _context.SaveChangesAsync();
                                     Console.WriteLine($"✅ Интерфейс с ID {id} успешно удален");
+                                    await Program.GetAllDataAsync(writer);
                                 }
                                 else
                                 {
@@ -946,6 +1254,7 @@ namespace ServerConsole.DataClasses
                                     _context.Devices.Remove(existingDevices);
                                     await _context.SaveChangesAsync();
                                     Console.WriteLine($"✅ Устройство с ID {id} успешно удалено");
+                                    await Program.GetAllDataAsync(writer);
                                 }
                                 else
                                 {
@@ -986,6 +1295,7 @@ namespace ServerConsole.DataClasses
                                     _context.Registers.Remove(existingRegister);
                                     await _context.SaveChangesAsync();
                                     Console.WriteLine($"✅ Регистр с ID {id} успешно удален");
+                                    await Program.GetAllDataAsync(writer);
                                 }
                                 else
                                 {
