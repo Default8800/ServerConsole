@@ -28,32 +28,47 @@ class Program
     static async Task Main(string[] args)
     {
         _server = new HttpListener();
-        // Добавляем префиксы для API
         _server.Prefixes.Add("http://127.0.0.1:8888/");
         _server.Prefixes.Add("http://localhost:8888/");
 
         _tcpServer = new TcpListener(IPAddress.Any, 8889);
         DbConnect();
 
-        _server.Start();
-        _tcpServer.Start();
-
-        Console.WriteLine("HTTP Сервер запущен на http://localhost:8888/");
-        Console.WriteLine("TCP Сервер запущен на порту 8889");
-        Console.WriteLine("Нажмите Ctrl+C для остановки сервера");
-
-        // Обработка Ctrl+C
-        Console.CancelKeyPress += (sender, e) =>
+        try
         {
-            e.Cancel = true;
-            _isRunning = false;
-            _server.Stop();
-            _tcpServer.Stop();
-            Console.WriteLine("Сервер остановлен");
-        };
+            _server.Start();
+            _tcpServer.Start();
 
+            Console.WriteLine("✅ HTTP Сервер запущен на http://localhost:8888/");
+            Console.WriteLine("✅ TCP Сервер запущен на порту 8889");
+            Console.WriteLine($"📡 TCP Сервер слушает на: {_tcpServer.LocalEndpoint}");
+
+            // Проверка что порт занят
+            CheckPort(8889);
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Ошибка запуска сервера: {ex.Message}");
+            return;
+        }
         // Запускаем обработку запросов
         await Task.WhenAll(HandleHttpRequestsAsync(), HandleTcpRequestsAsync());
+    }
+    private static void CheckPort(int port)
+    {
+        try
+        {
+            using (var tcpClient = new TcpClient())
+            {
+                tcpClient.Connect("localhost", port);
+                Console.WriteLine($"✅ Порт {port} доступен для подключения");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Порт {port} недоступен: {ex.Message}");
+        }
     }
 
     private static async Task HandleHttpRequestsAsync()

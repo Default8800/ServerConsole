@@ -144,6 +144,7 @@ namespace ServerConsole.DataClasses
                             await _context.Interfaces.AddAsync(interfaceObj);
                             await _context.SaveChangesAsync();
 
+                            GetAllDataAsync(writer);
                             AddLogs($"Добавлен интерфейс: {interfaceObj.Name}", "Успех");
                             Console.WriteLine($"✅ Добавлен интерфейс: {interfaceObj.Name}");
                         }
@@ -181,7 +182,7 @@ namespace ServerConsole.DataClasses
 
                             await _context.Devices.AddAsync(deviceObj);
                             await _context.SaveChangesAsync();
-
+                            GetAllDataAsync(writer);
                             AddLogs($"Добавлено устройство: {deviceObj.Name}", "Успех");
                             Console.WriteLine($"✅ Добавлено устройство: {deviceObj.Name}");
                         }
@@ -224,7 +225,7 @@ namespace ServerConsole.DataClasses
 
                             await _context.RegisterValues.AddAsync(registerValue);
                             await _context.SaveChangesAsync();
-
+                            GetAllDataAsync(writer);
                             string successMsg = $"✅ Регистр создан и начальное значение {initialValue} добавлено";
                             AddLogs(successMsg, "Успех");
                             Console.WriteLine(successMsg);
@@ -1213,6 +1214,10 @@ namespace ServerConsole.DataClasses
                                     _context.Interfaces.Remove(existingInterface);
                                     await _context.SaveChangesAsync();
                                     Console.WriteLine($"✅ Интерфейс с ID {id} успешно удален");
+
+                                  
+                                   
+
                                     await Program.GetAllDataAsync(writer);
                                 }
                                 else
