@@ -66,31 +66,31 @@ namespace ServerConsole.DataClasses
             {
                 // Интерфейсы
                 var interfaces = new List<Interfaces>
-        {
-            new Interfaces("Интерфейс 1", "Описание 1"),
-            new Interfaces("Интерфейс 2", "Описание 2"),
-            new Interfaces("Интерфейс 3", "Описание 3")
-        };
+    {
+        new Interfaces("Интерфейс 1", "Описание 1"),
+        new Interfaces("Интерфейс 2", "Описание 2"),
+        new Interfaces("Интерфейс 3", "Описание 3")
+    };
                 _context.Interfaces.AddRange(interfaces);
-                _context.SaveChanges();
+                _context.SaveChanges(); // Здесь генерируются реальные ID
 
-                // Устройства
+                // Теперь используем реальные ID интерфейсов
                 var devices = new List<Devices>
-        {
-            new Devices(1, "Устройство 1", "Описание устройства 1", true, "Круг ●", 50, 10, 10, "#FF0000"),
-            new Devices(2, "Устройство 2", "Описание устройства 2", true, "Квадрат ■", 60, 50, 50, "#0000FF"),
-            new Devices(3, "Устройство 3", "Описание устройства 3", false, "Треугольник ▲", 40, 100, 100, "#008000")
-        };
+    {
+        new Devices(interfaces[0].Id, "Устройство 1", "Описание устройства 1", true, "Круг ●", 50, 10, 10, "#FF0000"),
+        new Devices(interfaces[1].Id, "Устройство 2", "Описание устройства 2", true, "Квадрат ■", 60, 50, 50, "#0000FF"),
+        new Devices(interfaces[2].Id, "Устройство 3", "Описание устройства 3", false, "Треугольник ▲", 40, 100, 100, "#008000")
+    };
                 _context.Devices.AddRange(devices);
                 _context.SaveChanges();
 
-                // Регистры
+                // Регистры (предполагая, что они связаны с устройствами)
                 var registers = new List<Registers>
-        {
-            new Registers(1, "Регистр 1", "Описание регистра 1"),
-            new Registers(2, "Регистр 2", "Описание регистра 2"),
-            new Registers(3, "Регистр 3", "Описание регистра 3")
-        };
+    {
+        new Registers(devices[0].Id, "Регистр 1", "Описание регистра 1"),
+        new Registers(devices[1].Id, "Регистр 2", "Описание регистра 2"),
+        new Registers(devices[2].Id, "Регистр 3", "Описание регистра 3")
+    };
                 _context.Registers.AddRange(registers);
                 _context.SaveChanges();
 
@@ -99,15 +99,16 @@ namespace ServerConsole.DataClasses
                 var registerValues = new List<RegisterValues>();
                 var now = DateTime.UtcNow;
 
-                for (int registerId = 1; registerId <= 3; registerId++)
+                // Используем реальные ID регистров
+                for (int i = 0; i < registers.Count; i++)
                 {
-                    for (int i = 0; i < 3; i++)
+                    for (int j = 0; j < 3; j++)
                     {
                         registerValues.Add(new RegisterValues
                         {
-                            RegisterId = registerId,
+                            RegisterId = registers[i].Id,
                             Value = (float)(random.NextDouble() * 100),
-                            Timestamp = now.AddHours(-i)
+                            Timestamp = now.AddHours(-j)
                         });
                     }
                 }
@@ -115,12 +116,18 @@ namespace ServerConsole.DataClasses
                 _context.SaveChanges();
 
                 AddLogs("Тестовые данные добавлены во все таблицы", "Успех");
-                Console.WriteLine("✅ Тестовые данные добавлены во все таблицы");
+                Console.WriteLine(" Тестовые данные добавлены во все таблицы");
+                var interfacesCount = _context.Interfaces.Count();
+                var devicesCount = _context.Devices.Count();
+                var registersCount = _context.Registers.Count();
+                var registerValuesCount = _context.RegisterValues.Count();
+
+                Console.WriteLine($"Таблицы: Interfaces({interfacesCount}), Devices({devicesCount}), Registers({registersCount}), RegisterValues({registerValuesCount})");
             }
             catch (Exception ex)
             {
                 AddLogs($"Ошибка добавления тестовых данных: {ex.Message}", "Ошибка");
-                Console.WriteLine($"❌ Ошибка добавления тестовых данных: {ex.Message}");
+                Console.WriteLine($" Ошибка добавления тестовых данных: {ex.Message}");
             }
         }
 
@@ -141,12 +148,18 @@ namespace ServerConsole.DataClasses
                                 EditingDate = DateTime.UtcNow
                             };
 
+                            
                             await _context.Interfaces.AddAsync(interfaceObj);
                             await _context.SaveChangesAsync();
 
+                            
+                            Console.WriteLine($"Создан интерфейс с ID: {interfaceObj.Id}");
+
+                           
+
                             GetAllDataAsync(writer);
                             AddLogs($"Добавлен интерфейс: {interfaceObj.Name}", "Успех");
-                            Console.WriteLine($"✅ Добавлен интерфейс: {interfaceObj.Name}");
+                            Console.WriteLine($" Добавлен интерфейс: {interfaceObj.Name}");
                         }
                         break;
                     case "Devices":
@@ -160,7 +173,7 @@ namespace ServerConsole.DataClasses
 
                             if (!interfaceExists)
                             {
-                                string errorMsg = $"❌ Интерфейс с ID {interfaceId} не существует";
+                                string errorMsg = $"Интерфейс с ID {interfaceId} не существует";
                                 AddLogs(errorMsg, "Ошибка");
                                 Console.WriteLine(errorMsg);
                                 return;
@@ -184,7 +197,7 @@ namespace ServerConsole.DataClasses
                             await _context.SaveChangesAsync();
                             GetAllDataAsync(writer);
                             AddLogs($"Добавлено устройство: {deviceObj.Name}", "Успех");
-                            Console.WriteLine($"✅ Добавлено устройство: {deviceObj.Name}");
+                            Console.WriteLine($"Добавлено устройство: {deviceObj.Name}");
                         }
                         break;
                     case "Registers":
@@ -226,7 +239,7 @@ namespace ServerConsole.DataClasses
                             await _context.RegisterValues.AddAsync(registerValue);
                             await _context.SaveChangesAsync();
                             GetAllDataAsync(writer);
-                            string successMsg = $"✅ Регистр создан и начальное значение {initialValue} добавлено";
+                            string successMsg = $"Регистр создан и начальное значение {initialValue} добавлено";
                             AddLogs(successMsg, "Успех");
                             Console.WriteLine(successMsg);
                         }
@@ -264,7 +277,7 @@ namespace ServerConsole.DataClasses
                             await _context.SaveChangesAsync();
 
                             AddLogs($"Добавлен лог: {logObj.Message}", "Успех");
-                            Console.WriteLine($"✅ Добавлен лог: {logObj.Message}");
+                            Console.WriteLine($"Добавлен лог: {logObj.Message}");
                         }
                         break;
                 }
@@ -318,14 +331,22 @@ namespace ServerConsole.DataClasses
         {
             try
             {
+                
+
                 var registerValuesToAdd = new List<RegisterValues>();
 
                 foreach (var item in batchData)
                 {
-                    if (item is List<object> valueData && valueData.Count >= 2)
+
+                    // Преобразуем элемент в строку и парсим как JSON массив
+                    string jsonArray = item.ToString();
+                    var array = Newtonsoft.Json.JsonConvert.DeserializeObject<object[]>(jsonArray);
+
+                    
+                    if (array.Length >= 2)
                     {
-                        int registerId = GetSafeInt(valueData[0]);
-                        float value = GetSafeFloat(valueData[1]);
+                        var registerId = GetSafeInt(array[0]);
+                        var value = GetSafeFloat(array[1]);
 
                         // Проверяем существование регистра
                         bool registerExists = await _context.Registers.AnyAsync(r => r.Id == registerId);
@@ -333,7 +354,7 @@ namespace ServerConsole.DataClasses
                         {
                             string warnMsg = $"Регистр с ID {registerId} не существует, пропускаем";
                             AddLogs(warnMsg, "Предупреждение");
-                            Console.WriteLine($"⚠️ {warnMsg}");
+                            Console.WriteLine($" {warnMsg}");
                             continue;
                         }
 
@@ -341,7 +362,7 @@ namespace ServerConsole.DataClasses
                         {
                             RegisterId = registerId,
                             Value = value,
-                            Timestamp = valueData.Count > 2 ? GetSafeDateTime(valueData[2]) : DateTime.UtcNow
+                            Timestamp =  DateTime.UtcNow
                         };
 
                         registerValuesToAdd.Add(registerValueObj);
@@ -355,16 +376,17 @@ namespace ServerConsole.DataClasses
 
                     string successMsg = $"Добавлено {registerValuesToAdd.Count} значений регистров";
                     AddLogs(successMsg, "Успех");
-                    Console.WriteLine($"✅ {successMsg}");
+                    Console.WriteLine($" {successMsg}");
                 }
             }
             catch (Exception ex)
             {
                 string errorMsg = $"Ошибка добавления пачки значений: {ex.Message}";
                 AddLogs(errorMsg, "Ошибка");
-                Console.WriteLine($"❌ {errorMsg}");
+                Console.WriteLine($" {errorMsg}");
             }
         }
+        
 
         private static async Task SendErrorResponseAsync(IResponseWriter writer, string error)
         {
@@ -601,7 +623,7 @@ namespace ServerConsole.DataClasses
                     default:
                         string errorMsg = $"Неизвестный тип объекта: {typeObjects}";
                         AddLogs(errorMsg, "Ошибка");
-                        Console.WriteLine($"❌ {errorMsg}");
+                        Console.WriteLine($"{errorMsg}");
                         await writer.SendErrorAsync(errorMsg);
                         return;
                 }
@@ -1170,7 +1192,7 @@ namespace ServerConsole.DataClasses
             }
         }
 
-        private async Task AddLogs(string message, string type) // отдельно вывел метод добавления логов в бд для удобства 
+        public async Task AddLogs(string message, string type) // отдельно вывел метод добавления логов в бд для удобства 
         {
             if (message.Length > 0 && type.Length >0)
             {
@@ -1213,26 +1235,75 @@ namespace ServerConsole.DataClasses
                                 {
                                     _context.Interfaces.Remove(existingInterface);
                                     await _context.SaveChangesAsync();
-                                    Console.WriteLine($"✅ Интерфейс с ID {id} успешно удален");
+                                    Console.WriteLine($" Интерфейс с ID {id} успешно удален");
+                                    AddLogs($"Интерфейс с ID {id} успешно удален", "Успех");
 
-                                  
-                                   
 
+
+                                    
+
+
+
+                                    //удаляем все связанные девайсы и тд 
+                                    var existingDevices = await _context.Devices
+                                                        .Where(i => i.InterfaceId == id)
+                                                        .ToListAsync();
+
+                                    if (existingDevices.Any())
+                                    {
+                                        _context.Devices.RemoveRange(existingDevices);
+                                        await _context.SaveChangesAsync();
+                                        Console.WriteLine($" Удалено {existingDevices.Count} связанных устройств");
+                                    }
+
+
+                                    for(int a = 0; a< existingDevices.Count();a++)
+                                    {
+                                        var existingRegisters = await _context.Registers
+                                                        .Where(i => i.DeviceId == existingDevices[a].Id)
+                                                        .ToListAsync();
+
+                                        if (existingRegisters.Any())
+                                        {
+                                            _context.Registers.RemoveRange(existingRegisters);
+                                            await _context.SaveChangesAsync();
+                                            Console.WriteLine($" Удалено {existingRegisters.Count} связанных регистров");
+
+                                            for (int b = 0;b < existingRegisters.Count(); b++)
+                                            {
+                                                var existingRegistersValue = await _context.RegisterValues
+                                                                .Where(i => i.RegisterId == existingRegisters[b].Id)
+                                                                .ToListAsync();
+
+                                                if (existingRegisters.Any())
+                                                {
+                                                    _context.Registers.RemoveRange(existingRegisters);
+                                                    await _context.SaveChangesAsync();
+                                                    Console.WriteLine($" Удалено {existingRegisters.Count} связанных значений регистров регистров");
+
+
+                                                }
+                                            }
+                                        }
+                                    }
                                     await Program.GetAllDataAsync(writer);
                                 }
                                 else
                                 {
-                                    Console.WriteLine($"❌ Интерфейс с ID {id} не найден");
+                                    AddLogs($"Интерфейс с ID {id} не найден", "Ошибка");
+                                    Console.WriteLine($" Интерфейс с ID {id} не найден");
                                 }
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine($"❌ Ошибка при удалении интерфейса: {ex.Message}");
+                                AddLogs($"Ошибка при удалении интерфейса: {ex.Message}", "Ошибка");
+                                Console.WriteLine($" Ошибка при удалении интерфейса: {ex.Message}");
                             }
                         }
                         else
                         {
-                            Console.WriteLine("❌ Недостаточно данных для удаления интерфейса");
+                            AddLogs($"Недостаточно данных для удаления интерфейса", "Ошибка");
+                            Console.WriteLine(" Недостаточно данных для удаления интерфейса");
                         }
                         break;
 
@@ -1258,22 +1329,56 @@ namespace ServerConsole.DataClasses
                                 {
                                     _context.Devices.Remove(existingDevices);
                                     await _context.SaveChangesAsync();
-                                    Console.WriteLine($"✅ Устройство с ID {id} успешно удалено");
+                                    AddLogs($"Устройство с ID {id} успешно удалено", "Успех");
+                                    Console.WriteLine($"Устройство с ID {id} успешно удалено");
+
+                                    //удаляем все связанные девайсы и тд 
+                                    var existingRegisters = await _context.Registers
+                                                        .Where(i => i.DeviceId == id)
+                                                        .ToListAsync();
+
+                                    if (existingRegisters.Any())
+                                    {
+                                        _context.Registers.RemoveRange(existingRegisters);
+                                        await _context.SaveChangesAsync();
+                                        Console.WriteLine($" Удалено {existingRegisters.Count} связанных регистров");
+                                    }
+
+
+                                    for (int a = 0; a < existingRegisters.Count(); a++)
+                                    {
+                                        var existingRegistersValue = await _context.RegisterValues
+                                                        .Where(i => i.RegisterId == existingRegisters[a].Id)
+                                                        .ToListAsync();
+
+                                        if (existingRegistersValue.Any())
+                                        {
+                                            _context.RegisterValues.RemoveRange(existingRegistersValue);
+                                            await _context.SaveChangesAsync();
+                                            Console.WriteLine($" Удалено {existingRegisters.Count} связанных значений регистров");
+
+                                            
+                                        }
+                                    }
+
                                     await Program.GetAllDataAsync(writer);
                                 }
                                 else
                                 {
-                                    Console.WriteLine($"❌ Устройство с ID {id} не найдено");
+                                    AddLogs($"Устройство с ID {id} не найдено", "Ошибка");
+                                    Console.WriteLine($"Устройство с ID {id} не найдено");
                                 }
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine($"❌ Ошибка при удалении устройства: {ex.Message}");
+                                AddLogs($"Ошибка при удалении устройства: {ex.Message}", "Ошибка");
+                                Console.WriteLine($"Ошибка при удалении устройства: {ex.Message}");
                             }
                         }
                         else
                         {
-                            Console.WriteLine("❌ Недостаточно данных для удаления устройства");
+                            AddLogs($"Недостаточно данных для удаления устройства", "Ошибка");
+                            Console.WriteLine("Недостаточно данных для удаления устройства");
                         }
                         break;
 
@@ -1299,21 +1404,41 @@ namespace ServerConsole.DataClasses
                                 {
                                     _context.Registers.Remove(existingRegister);
                                     await _context.SaveChangesAsync();
-                                    Console.WriteLine($"✅ Регистр с ID {id} успешно удален");
+                                    AddLogs($"Регистр с ID {id} успешно удален", "Успех");
+                                    Console.WriteLine($"Регистр с ID {id} успешно удален");
+
+                                    //удаляем все связанные девайсы и тд 
+                                    var existingRegisterValues = await _context.RegisterValues
+                                                        .Where(i => i.RegisterId == id)
+                                                        .ToListAsync();
+
+                                    if (existingRegisterValues.Any())
+                                    {
+                                        _context.RegisterValues.RemoveRange(existingRegisterValues);
+                                        await _context.SaveChangesAsync();
+                                        Console.WriteLine($" Удалено {existingRegisterValues.Count} связанных значений регистров");
+                                    }
+
+
+                                    
+
                                     await Program.GetAllDataAsync(writer);
                                 }
                                 else
                                 {
-                                    Console.WriteLine($"❌ Регистр с ID {id} не найден");
+                                    AddLogs($"Регистр с ID {id} не найден", "Ошибка");
+                                    Console.WriteLine($"Регистр с ID {id} не найден");
                                 }
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine($"❌ Ошибка при удалении регистра: {ex.Message}");
+                                AddLogs($"Ошибка при удалении регистра: {ex.Message}", "Ошибка");
+                                Console.WriteLine($"Ошибка при удалении регистра: {ex.Message}");
                             }
                         }
                         else
                         {
+                            AddLogs($"Недостаточно данных для удаления регистра", "Ошибка");
                             Console.WriteLine("❌ Недостаточно данных для удаления регистра");
                         }
                         break;
@@ -1340,21 +1465,25 @@ namespace ServerConsole.DataClasses
                                 {
                                     _context.RegisterValues.Remove(existingRegisterValue);
                                     await _context.SaveChangesAsync();
-                                    Console.WriteLine($"✅ Значение регистра с ID {id} успешно удалено");
+                                    AddLogs($"Значение регистра с ID {id} успешно удалено", "Успех");
+                                    Console.WriteLine($"Значение регистра с ID {id} успешно удалено");
                                 }
                                 else
                                 {
-                                    Console.WriteLine($"❌ Значение регистра с ID {id} не найдено");
+                                    AddLogs($"Значение регистра с ID {id} не найдено", "Ошибка");
+                                    Console.WriteLine($"Значение регистра с ID {id} не найдено");
                                 }
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine($"❌ Ошибка при удалении значения регистра: {ex.Message}");
+                                AddLogs($"Ошибка при удалении значения регистра: {ex.Message}", "Ошибка");
+                                Console.WriteLine($"Ошибка при удалении значения регистра: {ex.Message}");
                             }
                         }
                         else
                         {
-                            Console.WriteLine("❌ Недостаточно данных для удаления значения регистра");
+                            AddLogs($"Недостаточно данных для удаления значения регистра", "Ошибка");
+                            Console.WriteLine("Недостаточно данных для удаления значения регистра");
                         }
                         break;
 
@@ -1380,33 +1509,34 @@ namespace ServerConsole.DataClasses
                                 {
                                     _context.Logs.Remove(existingLog);
                                     await _context.SaveChangesAsync();
-                                    Console.WriteLine($"✅ Лог с ID {id} успешно удален");
+                                    
                                 }
                                 else
                                 {
-                                    Console.WriteLine($"❌ Лог с ID {id} не найден");
+                                    
                                 }
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine($"❌ Ошибка при удалении лога: {ex.Message}");
+                                
                             }
                         }
                         else
                         {
-                            Console.WriteLine("❌ Недостаточно данных для удаления лога");
+                            
                         }
                         break;
 
                     default:
-                        Console.WriteLine($"❌ Неизвестный тип объекта: {typeObjects}");
+                        
                         await SendErrorResponseAsync(writer, $"Неизвестный тип объекта: {typeObjects}");
                         break;
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Ошибка удаления: {ex.Message}");
+                AddLogs($"Ошибка удаления: {ex.Message}", "Ошибка");
+                Console.WriteLine($"Ошибка удаления: {ex.Message}");
                 await SendErrorResponseAsync(writer, ex.Message);
             }
         }

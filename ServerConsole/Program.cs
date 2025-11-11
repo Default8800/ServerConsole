@@ -39,17 +39,18 @@ class Program
             _server.Start();
             _tcpServer.Start();
 
-            Console.WriteLine("✅ HTTP Сервер запущен на http://localhost:8888/");
-            Console.WriteLine("✅ TCP Сервер запущен на порту 8889");
+            Console.WriteLine("HTTP Сервер запущен на http://localhost:8888/");
+            Console.WriteLine("TCP Сервер запущен на порту 8889");
             Console.WriteLine($"📡 TCP Сервер слушает на: {_tcpServer.LocalEndpoint}");
-
+            db.AddLogs("Сервер запущен", "Успех");
             // Проверка что порт занят
             CheckPort(8889);
 
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Ошибка запуска сервера: {ex.Message}");
+            db.AddLogs("Ошибка запуска сервера", "Ошибка");
+            Console.WriteLine($"Ошибка запуска сервера: {ex.Message}");
             return;
         }
         // Запускаем обработку запросов
@@ -62,12 +63,14 @@ class Program
             using (var tcpClient = new TcpClient())
             {
                 tcpClient.Connect("localhost", port);
-                Console.WriteLine($"✅ Порт {port} доступен для подключения");
+                db.AddLogs($"Порт {port} доступен для подключения", "Успех");
+                Console.WriteLine($"Порт {port} доступен для подключения");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Порт {port} недоступен: {ex.Message}");
+            db.AddLogs($"Порт {port} недоступен для подключения", "Ошибка");
+            Console.WriteLine($"Порт {port} недоступен: {ex.Message}");
         }
     }
 
@@ -87,6 +90,7 @@ class Program
             }
             catch (Exception ex)
             {
+                db.AddLogs($"Ошибка обработки HTTP запроса: {ex.Message}", "Ошибка");
                 Console.WriteLine($"❌ Ошибка обработки HTTP запроса: {ex.Message}");
             }
         }
@@ -198,7 +202,7 @@ class Program
             Console.WriteLine($"🔗 URL: {request.Url}");
             Console.WriteLine($"📡 Метод: {request.HttpMethod}");
             Console.WriteLine($"👤 Клиент: {request.RemoteEndPoint}");
-
+            db.AddLogs($"Получен HTTP запрос от {request.RemoteEndPoint}", "Успех");
             // Обрабатываем preflight запросы (OPTIONS)
             if (request.HttpMethod == "OPTIONS")
             {
@@ -211,6 +215,7 @@ class Program
             // Проверяем метод запроса
             if (request.HttpMethod != "POST")
             {
+                db.AddLogs($"Запрос другого метода", "Ошибка");
                 await responseWriter.SendErrorAsync("Только POST запросы поддерживаются");
                 return;
             }
@@ -221,6 +226,7 @@ class Program
 
             if (string.IsNullOrEmpty(requestBody))
             {
+                db.AddLogs($"Пустое тело запроса", "Ошибка");
                 await responseWriter.SendErrorAsync("Пустое тело запроса");
                 return;
             }
@@ -237,12 +243,14 @@ class Program
             }
             catch (JsonException ex)
             {
+                db.AddLogs($"Неверный формат JSON: {ex.Message}", "Ошибка");
                 await responseWriter.SendErrorAsync($"Неверный формат JSON: {ex.Message}");
                 return;
             }
 
             if (requests == null)
             {
+                db.AddLogs($"Неверный формат запроса", "Ошибка");
                 await responseWriter.SendErrorAsync("Неверный формат запроса");
                 return;
             }
@@ -253,7 +261,8 @@ class Program
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Ошибка обработки HTTP запроса: {ex.Message}");
+            db.AddLogs($"Ошибка обработки HTTP запроса: {ex.Message}", "Ошибка");
+            Console.WriteLine($"Ошибка обработки HTTP запроса: {ex.Message}");
             await responseWriter.SendErrorAsync("Внутренняя ошибка сервера");
         }
     }
@@ -265,7 +274,7 @@ class Program
             Interlocked.Increment(ref _numRequest);
             Console.WriteLine($"\n🔌 TCP Запрос №{_numRequest}/Время: {DateTime.Now:HH:mm:ss}");
             Console.WriteLine($"🌐 Клиент: {tcpClient.Client.RemoteEndPoint}");
-
+            db.AddLogs($"Получен TCP запрос от {tcpClient.Client.RemoteEndPoint}", "Успех");
             using (tcpClient)
             using (var stream = tcpClient.GetStream())
             using (var reader = new StreamReader(stream, Encoding.UTF8))
@@ -305,6 +314,7 @@ class Program
 
                 if (string.IsNullOrEmpty(requestBody))
                 {
+                    db.AddLogs($"Пустое тело запроса", "Ошибка");
                     await responseWriter.SendErrorAsync("Пустое тело запроса");
                     return;
                 }
@@ -316,12 +326,14 @@ class Program
                 }
                 catch (JsonException ex)
                 {
+                    db.AddLogs($"Неверный формат JSON: {ex.Message}", "Ошибка");
                     await responseWriter.SendErrorAsync($"Неверный формат JSON: {ex.Message}");
                     return;
                 }
 
                 if (requests == null)
                 {
+                    db.AddLogs($"Неверный формат запроса", "Ошибка");
                     await responseWriter.SendErrorAsync("Неверный формат запроса");
                     return;
                 }
@@ -332,7 +344,8 @@ class Program
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Ошибка обработки TCP запроса: {ex.Message}");
+            db.AddLogs($"Ошибка обработки TCP запроса: {ex.Message}", "Ошибка");
+            Console.WriteLine($"Ошибка обработки TCP запроса: {ex.Message}");
         }
     }
 
@@ -350,7 +363,8 @@ class Program
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Ошибка чтения тела запроса: {ex.Message}");
+            db.AddLogs($"Ошибка чтения тела запроса: {ex.Message}", "Ошибка");
+            Console.WriteLine($"Ошибка чтения тела запроса: {ex.Message}");
             return string.Empty;
         }
     }
@@ -378,6 +392,7 @@ class Program
     {
         try
         {
+
             Console.WriteLine($"🔧 Обработка запроса: {requests.ToString()}");
 
             switch (requests.NameRequests)
@@ -393,6 +408,7 @@ class Program
                     }
                     else
                     {
+                        db.AddLogs($"Неверные параметры для AddData", "Ошибка");
                         await writer.SendErrorAsync("Неверные параметры для AddData");
                     }
                     break;
@@ -404,6 +420,7 @@ class Program
                     }
                     else
                     {
+                        db.AddLogs($"Неверные параметры для DeleteData", "Ошибка");
                         await writer.SendErrorAsync("Неверные параметры для DeleteData");
                     }
                     break;
@@ -415,6 +432,7 @@ class Program
                     }
                     else
                     {
+                        db.AddLogs($"Неверные параметры для UpdateData", "Ошибка");
                         await writer.SendErrorAsync("Неверные параметры для UpdateData");
                     }
                     break;
@@ -430,18 +448,21 @@ class Program
                     }
                     else
                     {
+                        db.AddLogs($"Неверные параметры для GetOneDataForUpdate", "Ошибка");
                         await writer.SendErrorAsync("Неверные параметры для GetOneDataForUpdate");
                     }
                     break;
 
                 default:
+                    db.AddLogs($"Неизвестный запрос: {requests.NameRequests}", "Ошибка");
                     await writer.SendErrorAsync($"Неизвестный запрос: {requests.NameRequests}");
                     break;
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Ошибка обработки запроса: {ex.Message}");
+            db.AddLogs($"Ошибка обработки запроса: {ex.Message}", "Ошибка");
+            Console.WriteLine($"Ошибка обработки запроса: {ex.Message}");
             await writer.SendErrorAsync($"Ошибка обработки: {ex.Message}");
         }
     }
@@ -465,6 +486,7 @@ class Program
             }
             catch (Exception ex)
             {
+                db.AddLogs($"Ошибка TCP: {ex.Message}", "Ошибка");
                 Console.WriteLine($"Ошибка TCP: {ex.Message}");
             }
         }
@@ -615,11 +637,13 @@ class Program
             await writer.WriteAsync(json);
             await writer.FlushAsync();
 
-            Console.WriteLine("✅ Все данные отправлены");
+            db.AddLogs($"Все данные отправлены", "Успех");
+            Console.WriteLine("Все данные отправлены");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Ошибка получения всех данных: {ex.Message}");
+            db.AddLogs($"Ошибка получения всех данных: {ex.Message}", "Ошибка");
+            Console.WriteLine($"Ошибка получения всех данных: {ex.Message}");
             await writer.SendErrorAsync($"Ошибка получения данных: {ex.Message}");
         }
     }
@@ -657,105 +681,105 @@ class Program
 
 
 
-    private static async Task HandleRequestsAsync()
-    {
-        while (_isRunning)
-        {
-            try
-            {
-                // Асинхронно ожидаем входящее подключение
-                var context = await _server.GetContextAsync();
+    //private static async Task HandleRequestsAsync()
+    //{
+    //    while (_isRunning)
+    //    {
+    //        try
+    //        {
+    //            // Асинхронно ожидаем входящее подключение
+    //            var context = await _server.GetContextAsync();
 
-                // Обрабатываем каждый запрос в отдельной задаче
-                _ = Task.Run(async () => await ProcessRequestAsync(context));
-            }
-            catch (HttpListenerException ex) when (!_isRunning)
-            {
-                // Игнорируем исключение при остановке сервера
-                Console.WriteLine("Сервер остановлен");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка: {ex.Message}");
-            }
-        }
-    }
+    //            // Обрабатываем каждый запрос в отдельной задаче
+    //            _ = Task.Run(async () => await ProcessRequestAsync(context));
+    //        }
+    //        catch (HttpListenerException ex) when (!_isRunning)
+    //        {
+    //            // Игнорируем исключение при остановке сервера
+    //            Console.WriteLine("Сервер остановлен");
+    //        }
+    //        catch (Exception ex)
+    //        {
+    //            Console.WriteLine($"Ошибка: {ex.Message}");
+    //        }
+    //    }
+    //}
 
-    private static async Task ProcessRequestAsync(HttpListenerContext context)
-    {
-        var request = context.Request;
-        var response = context.Response;
+//    private static async Task ProcessRequestAsync(HttpListenerContext context)
+//    {
+//        var request = context.Request;
+//        var response = context.Response;
 
-        try
-        {
-            Console.WriteLine($"\nЗапрос №{_numRequest}/Время: {DateTime.Now:HH:mm:ss}");
-            Console.WriteLine($"🌐 Клиент: {request.RemoteEndPoint}");
-            Console.WriteLine($"🔗 URL: {request.Url}");
-            Console.WriteLine($"📋 Метод: {request.HttpMethod}");
+//        try
+//        {
+//            Console.WriteLine($"\nЗапрос №{_numRequest}/Время: {DateTime.Now:HH:mm:ss}");
+//            Console.WriteLine($"🌐 Клиент: {request.RemoteEndPoint}");
+//            Console.WriteLine($"🔗 URL: {request.Url}");
+//            Console.WriteLine($"📋 Метод: {request.HttpMethod}");
 
             
-            // Читаем тело запроса (если есть)
-            string requestBody = "";
-            if (request.HasEntityBody)
-            {
-                using (var reader = new System.IO.StreamReader(request.InputStream, request.ContentEncoding))
-                {
-                    requestBody = await reader.ReadToEndAsync();
-                    Console.WriteLine($"📝 Тело запроса: {requestBody}");
-                }
-            }
-            else
-            {
+//            // Читаем тело запроса (если есть)
+//            string requestBody = "";
+//            if (request.HasEntityBody)
+//            {
+//                using (var reader = new System.IO.StreamReader(request.InputStream, request.ContentEncoding))
+//                {
+//                    requestBody = await reader.ReadToEndAsync();
+//                    Console.WriteLine($"📝 Тело запроса: {requestBody}");
+//                }
+//            }
+//            else
+//            {
 
-            }
+//            }
 
-            // Формируем ответ
-            string responseText = GenerateResponse(request);
-            byte[] buffer = Encoding.UTF8.GetBytes(responseText);
+//            // Формируем ответ
+//            string responseText = GenerateResponse(request);
+//            byte[] buffer = Encoding.UTF8.GetBytes(responseText);
 
-            response.ContentType = "application/json";
-            response.ContentEncoding = Encoding.UTF8;
-            response.ContentLength64 = buffer.Length;
-            response.StatusCode = 200;
+//            response.ContentType = "application/json";
+//            response.ContentEncoding = Encoding.UTF8;
+//            response.ContentLength64 = buffer.Length;
+//            response.StatusCode = 200;
 
-            // Отправляем ответ
-            using (var output = response.OutputStream)
-            {
-                await output.WriteAsync(buffer, 0, buffer.Length);
-                await output.FlushAsync();
-            }
+//            // Отправляем ответ
+//            using (var output = response.OutputStream)
+//            {
+//                await output.WriteAsync(buffer, 0, buffer.Length);
+//                await output.FlushAsync();
+//            }
 
-            Console.WriteLine($"✅ Ответ отправлен ({buffer.Length} bytes)");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ Ошибка обработки запроса: {ex.Message}");
-            response.StatusCode = 500;
-            response.Close();
-        }
-    }
+//            Console.WriteLine($"✅ Ответ отправлен ({buffer.Length} bytes)");
+//        }
+//        catch (Exception ex)
+//        {
+//            Console.WriteLine($"❌ Ошибка обработки запроса: {ex.Message}");
+//            response.StatusCode = 500;
+//            response.Close();
+//        }
+//    }
 
-    private static string GenerateResponse(HttpListenerRequest request)
-    {
-        return $@"{{
-    ""status"": ""success"",
-    ""message"": ""Запрос обработан"",
-    ""timestamp"": ""{DateTime.Now:yyyy-MM-dd HH:mm:ss}"",
-    ""client"": ""{request.RemoteEndPoint}"",
-    ""method"": ""{request.HttpMethod}"",
-    ""url"": ""{request.Url}"",
-    ""headers"": {JsonSerializeHeaders(request.Headers)}
-}}";
-    }
+//    private static string GenerateResponse(HttpListenerRequest request)
+//    {
+//        return $@"{{
+//    ""status"": ""success"",
+//    ""message"": ""Запрос обработан"",
+//    ""timestamp"": ""{DateTime.Now:yyyy-MM-dd HH:mm:ss}"",
+//    ""client"": ""{request.RemoteEndPoint}"",
+//    ""method"": ""{request.HttpMethod}"",
+//    ""url"": ""{request.Url}"",
+//    ""headers"": {JsonSerializeHeaders(request.Headers)}
+//}}";
+//    }
 
-    private static string JsonSerializeHeaders(System.Collections.Specialized.NameValueCollection headers)
-    {
-        var dict = new System.Collections.Generic.Dictionary<string, string>();
-        foreach (string key in headers.Keys)
-        {
-            dict[key] = headers[key];
-        }
-        return System.Text.Json.JsonSerializer.Serialize(dict);
-    }
+    //private static string JsonSerializeHeaders(System.Collections.Specialized.NameValueCollection headers)
+    //{
+    //    var dict = new System.Collections.Generic.Dictionary<string, string>();
+    //    foreach (string key in headers.Keys)
+    //    {
+    //        dict[key] = headers[key];
+    //    }
+    //    return System.Text.Json.JsonSerializer.Serialize(dict);
+    //}
 }
 
